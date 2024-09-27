@@ -1,4 +1,6 @@
 .env
 todo/__pycache__/
 todoapp/__pycache__/
+todoapp/migrations/__pycache__
 venvTODO
+db.sqlite3
