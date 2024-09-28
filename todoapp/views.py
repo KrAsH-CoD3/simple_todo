@@ -13,10 +13,10 @@ def index(request):
         'message': 'Welcome to the TODO APP ✅',
         'urls': {
             'List': '/task-list/',
-            'Detail View': '/task-detail/<str:pk>/',
+            'Detail View': '/task-detail/<int:pk>/',
             'Create': '/task-create/',
-            'Update': '/task-update/<str:pk>/',
-            'Delete': '/task-delete/<str:pk>/',
+            'Update': '/task-update/<int:pk>/',
+            'Delete': '/task-delete/<int:pk>/',
         }
     })
 
