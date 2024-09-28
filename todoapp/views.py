@@ -26,32 +26,39 @@ def task_list(request):
     serializer = TaskSerializer(tasks, many=True)
     return Response(serializer.data)
 
+@api_view(['GET'])
 def task_detail(request, pk):
     task = Task.objects.get(pk=pk)
     serializer = TaskSerializer(task)
     return Response(serializer.data)
 
-def task_create(request):
-    return Response({'message': 'Hello World'})
-
-def task_update(request, pk):
-    return Response({'message': 'Hello World'})
-
-def task_delete(request, pk):
-    return Response({'message': 'Hello World'})
-
 @api_view(['POST'])
-def add(request):
-    return Response({'message': 'Hello World'})
+def task_create(request):
+    task = TaskSerializer(data=request.data)
+    if not task.is_valid():
+        return Response(task.errors, status=400)
+    task.save()
+    return Response(task.data, status=201)
 
-@api_view(['GET'])
-def delete(request, id):
-    return Response({'message': 'Hello World'})
+@api_view(['PATCH'])
+def task_update(request, pk):
+    task = Task.objects.get(pk=pk)
+    serializer = TaskSerializer(instance=task, data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=400)
+    serializer.save()
+    return Response(serializer.data)
 
-@api_view(['GET'])
-def update(request, id):
-    return Response({'message': 'Hello World'})
-
-@api_view(['GET'])
-def complete(request, id):
-    return Response({'message': 'Hello World'})
+@api_view(['DELETE'])
+def task_delete(request, pk):
+    task = Task.objects.get(pk=pk)
+    task.delete()
+    return Response({
+        'status': 200,
+        'message': 'Task deleted successfully ✅', 
+        'task': {
+            'id': task.id,
+            'title': task.title,
+            'completed': task.completed,
+        }
+    })
