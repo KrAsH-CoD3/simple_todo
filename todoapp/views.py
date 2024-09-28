@@ -7,7 +7,17 @@ from rest_framework.response import Response
 
 @api_view(['GET'])
 def index(request):
-    return Response({'message': 'Welcome to the homepage ✅'})
+    return Response({
+        'message': 'Welcome to the TODO APP ✅',
+        'urls': {
+            'List': '/task-list/',
+            'Detail View': '/task-detail/<str:pk>/',
+            'Create': '/task-create/',
+            'Update': '/task-update/<str:pk>/',
+            'Delete': '/task-delete/<str:pk>/',
+        }
+    })
+    
 
 @api_view(['POST'])
 def add(request):
