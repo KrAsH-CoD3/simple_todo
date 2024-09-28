@@ -57,7 +57,6 @@ def task_delete(request, pk):
         'status': 200,
         'message': 'Task deleted successfully ✅', 
         'task': {
-            'id': task.id,
             'title': task.title,
             'completed': task.completed,
         }
