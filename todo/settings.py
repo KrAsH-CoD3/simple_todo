@@ -83,12 +83,22 @@ WSGI_APPLICATION = 'todo.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+import dj_database_url
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': BASE_DIR / 'db.sqlite3',
+    # }
+    'default': dj_database_url.parse(environ.get('DATABASE_URL')),
+    # 'default': {
+    #     'ENGINE': dj_database_url.parse(environ.get('DATABASE_URL')),
+    #     # 'NAME': environ.get('DATABASE_NAME'),
+    #     # 'USER': environ.get('DATABASE_USER'),
+    #     # 'PASSWORD': environ.get('DATABASE_PASSWORD'),
+    #     # 'HOST': environ.get('DATABASE_HOST'),
+    #     # 'PORT': environ.get('DATABASE_PORT'),
+    # }
 }
 
 
