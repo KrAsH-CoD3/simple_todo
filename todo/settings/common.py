@@ -21,21 +21,6 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = environ.get('TODO_SECRET_KEY')
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
-ALLOWED_HOSTS = [
-    # 'simple-todo-5824.onrender.com'
-    '*'
-]
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -79,27 +64,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'todo.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-import dj_database_url
-
-DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.sqlite3',
-    #     'NAME': BASE_DIR / 'db.sqlite3',
-    # }
-    'default': dj_database_url.parse(environ.get('DATABASE_URL')),
-    # 'default': {
-    #     'ENGINE': dj_database_url.parse(environ.get('DATABASE_URL')),
-    #     # 'NAME': environ.get('DATABASE_NAME'),
-    #     # 'USER': environ.get('DATABASE_USER'),
-    #     # 'PASSWORD': environ.get('DATABASE_PASSWORD'),
-    #     # 'HOST': environ.get('DATABASE_HOST'),
-    #     # 'PORT': environ.get('DATABASE_PORT'),
-    # }
-}
 
 
 # Password validation
