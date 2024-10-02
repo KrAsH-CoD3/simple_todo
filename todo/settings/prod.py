@@ -7,7 +7,7 @@ SECRET_KEY = environ.get('TODO_SECRET_KEY')
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    'simple-todo-5824.onrender.com'
+    'simple-todo-5824.onrender.com',
 ]
 
 # Database
