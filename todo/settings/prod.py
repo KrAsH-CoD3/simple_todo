@@ -1,8 +1,6 @@
 from .common import *
 
 
-SECRET_KEY = environ.get('TODO_SECRET_KEY')
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
@@ -16,5 +14,5 @@ ALLOWED_HOSTS = [
 import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.parse(environ.get('DATABASE_URL'))
+    'default': dj_database_url.parse(environ.get('RENDER_DATABASE_URL'))
 }

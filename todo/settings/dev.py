@@ -1,7 +1,6 @@
 from .common import *
 
 
-SECRET_KEY = environ.get('TODO_SECRET_KEY')
 ALLOWED_HOSTS = []
 DEBUG = True
 
