@@ -32,6 +32,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'todoapp',
+    'frontend',
+    'bot_tasks_api',
     'rest_framework',
 ]
 

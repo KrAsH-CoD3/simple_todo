@@ -16,9 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.urls.resolvers import URLResolver
 
-urlpatterns = [
+urlpatterns: list[URLResolver] = [
     path('admin/', admin.site.urls),
-    path('', include('todoapp.urls')),
+    path('api/', include('todoapp.urls')),
+    path('', include('frontend.urls')),
+    path('bot/', include('bot_tasks_api.urls')),
 ]
 
