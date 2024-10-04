@@ -8,6 +8,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     'simple-todo-5824.onrender.com',
+    '127.0.0.1:3000',
 ]
 
 # Database
