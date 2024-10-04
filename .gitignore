@@ -3,6 +3,8 @@ todo/__pycache__/
 todo/settings/__pycache__/
 todoapp/__pycache__/
 todoapp/migrations/__pycache__
+bot_tasks_api/__pycache__/
+bot_tasks_api/migrations/__pycache__
 frontend/__pycache__/
 frontend/migrations/__pycache__/
 staticfiles/
