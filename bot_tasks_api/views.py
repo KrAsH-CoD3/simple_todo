@@ -39,7 +39,7 @@ def save_task(request) -> Response:
 
     return Response({
         'status': 'success',
-        'message': 'Tasks saved successfully ✅',
+        'message': 'Tasks saved successfully. ✅',
         "data": tasks.data,
     }, status=status.HTTP_201_CREATED)
 
@@ -50,7 +50,7 @@ def delete_task(request, owner, title) -> Response:
 
     return Response({
         'status': status.HTTP_204_NO_CONTENT,
-        'message': f'Task `{title}` deleted successfully ✅',
+        'message': f'Task `{title}` deleted successfully. ✅',
     }, status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['PATCH'])
@@ -62,5 +62,5 @@ def update_task(request, title) -> Response:
     serializer.save()
     return Response({
         'status': status.HTTP_200_OK,
-        'message': 'Task updated successfully ✅',
+        'message': 'Task updated successfully. ✅',
     }, status=status.HTTP_200_OK)
