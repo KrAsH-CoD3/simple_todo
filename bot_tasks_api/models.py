@@ -1,5 +1,4 @@
 from django.db import models
-# from rest_framework.serializers import ValidationError
 
 class BotTask(models.Model):
     owner = models.CharField(max_length=50)
@@ -10,11 +9,3 @@ class BotTask(models.Model):
 
     def __str__(self) -> str:
         return str(self.title)
-    
-    # def validate_title(self, value):
-    #     """
-    #     Check that the title is not already in the database.
-    #     """
-    #     if BotTask.objects.filter(title=value).exists():
-    #         raise ValidationError('Title already exists')
-    #     return value
