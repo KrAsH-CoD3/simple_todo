@@ -16,7 +16,14 @@ def get_task(request, title) -> Response:
 def get_all_bot_tasks(request) -> Response:
     tasks: BaseManager[BotTask] = BotTask.objects.all()
     serializer = TaskSerializer(tasks, many=True)
-    return Response(serializer.data)
+    
+    # for item in serializer.data:
+    #     item['owner'] = 'custom_value'
+    
+    return Response({
+        "status": "success",
+        "json": serializer.data,
+    })
 
 @api_view(['POST'])
 def save_bot_task(request) -> Response:
@@ -39,3 +46,15 @@ def delete_bot_task(request, title) -> Response:
         'status': status.HTTP_204_NO_CONTENT,
         'message': 'Tasks deleted successfully ✅',
     }, status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['PATCH'])
+def update_bot_task(request, title) -> Response:
+    tasks: BotTask = BotTask.objects.get(title=title)
+    serializer = TaskSerializer(instance=tasks, data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
+    serializer.save()
+    return Response({
+        'status': status.HTTP_200_OK,
+        'message': 'Task updated successfully ✅',
+    }, status=status.HTTP_200_OK)

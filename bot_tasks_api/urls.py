@@ -7,4 +7,5 @@ urlpatterns: list[URLPattern] = [
     path('get-task/<str:title>/', views.get_task, name='get-task'),
     path('tasks/', views.get_all_bot_tasks, name='get-all-bot-tasks'),
     path('delete-task/<str:title>/', views.delete_bot_task, name='delete-bot-task'),
+    path('update-task/<str:title>/', views.update_bot_task, name='update-bot-task'),
 ]
