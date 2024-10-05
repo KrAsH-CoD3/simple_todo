@@ -49,9 +49,10 @@ def delete_task(request, owner, title) -> Response:
     task.delete()
 
     return Response({
-        'status': status.HTTP_204_NO_CONTENT,
+        'status': 'success',
+        'status_code': status.HTTP_202_ACCEPTED,
         'message': f'Task `{title}` deleted successfully. ✅',
-    }, status=status.HTTP_204_NO_CONTENT)
+    }, status=status.HTTP_202_ACCEPTED)
 
 @api_view(['PATCH'])
 def update_task(request, title) -> Response:
