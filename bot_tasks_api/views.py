@@ -14,12 +14,16 @@ def get_task(request, title) -> Response:
 
 @api_view(['GET'])
 def get_all_tasks(request) -> Response:
-    tasks: BaseManager[BotTask] = BotTask.objects.all()
+
+    owner = request.GET.get('owner', None)  # Retrieve the 'owner' query parameter
+
+    if owner:
+        tasks = BotTask.objects.filter(owner__contains=owner)  # Filter Tasks by owner
+    else:
+        tasks: BaseManager[BotTask] = BotTask.objects.all()  # Retrieve all Tasks if no owner is provided
+
     serializer = BotTaskSerializer(tasks, many=True)
-    
-    # for item in serializer.data:
-    #     item['owner'] = 'custom_value'
-    
+        
     return Response({
         "status": "success",
         "json": serializer.data,
