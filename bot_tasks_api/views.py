@@ -1,5 +1,6 @@
 # from django.shortcuts import render
 from django.db.models.manager import BaseManager
+from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -18,7 +19,7 @@ def get_all_tasks(request) -> Response:
     owner = request.GET.get('owner', None)  # Retrieve the 'owner' query parameter
 
     if owner:
-        tasks = BotTask.objects.filter(owner__contains=owner)  # Filter Tasks by owner
+        tasks = BotTask.objects.filter(owner__exact=owner)  # Filter Tasks by owner
     else:
         tasks: BaseManager[BotTask] = BotTask.objects.all()  # Retrieve all Tasks if no owner is provided
 
@@ -43,13 +44,13 @@ def save_task(request) -> Response:
     }, status=status.HTTP_201_CREATED)
 
 @api_view(['DELETE'])
-def delete_task(request, title) -> Response:
-    tasks: BotTask = BotTask.objects.get(title=title)
-    tasks.delete()
+def delete_task(request, owner, title) -> Response: 
+    task: BotTask = get_object_or_404(BotTask, owner=owner, title=title)
+    task.delete()
 
     return Response({
         'status': status.HTTP_204_NO_CONTENT,
-        'message': 'Tasks deleted successfully ✅',
+        'message': f'Task `{title}` deleted successfully ✅',
     }, status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['PATCH'])
