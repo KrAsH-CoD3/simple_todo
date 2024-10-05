@@ -3,19 +3,19 @@ from django.db.models.manager import BaseManager
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import TaskSerializer
+from .serializers import BotTaskSerializer
 from .models import BotTask
 
 @api_view(['GET'])
 def get_task(request, title) -> Response:
     tasks: BotTask = BotTask.objects.get(title=title) 
-    serializer = TaskSerializer(tasks)
+    serializer = BotTaskSerializer(tasks)
     return Response(serializer.data)
 
 @api_view(['GET'])
-def get_all_bot_tasks(request) -> Response:
+def get_all_tasks(request) -> Response:
     tasks: BaseManager[BotTask] = BotTask.objects.all()
-    serializer = TaskSerializer(tasks, many=True)
+    serializer = BotTaskSerializer(tasks, many=True)
     
     # for item in serializer.data:
     #     item['owner'] = 'custom_value'
@@ -26,8 +26,8 @@ def get_all_bot_tasks(request) -> Response:
     })
 
 @api_view(['POST'])
-def save_bot_task(request) -> Response:
-    tasks = TaskSerializer(data=request.data)
+def save_task(request) -> Response:
+    tasks = BotTaskSerializer(data=request.data)
     if not tasks.is_valid():
         return Response(tasks.errors, status=status.HTTP_400_BAD_REQUEST)
     tasks.save()
@@ -35,10 +35,11 @@ def save_bot_task(request) -> Response:
     return Response({
         'status': 'success',
         'message': 'Tasks saved successfully ✅',
+        "data": tasks.data,
     }, status=status.HTTP_201_CREATED)
 
 @api_view(['DELETE'])
-def delete_bot_task(request, title) -> Response:
+def delete_task(request, title) -> Response:
     tasks: BotTask = BotTask.objects.get(title=title)
     tasks.delete()
 
@@ -48,9 +49,9 @@ def delete_bot_task(request, title) -> Response:
     }, status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['PATCH'])
-def update_bot_task(request, title) -> Response:
+def update_task(request, title) -> Response:
     tasks: BotTask = BotTask.objects.get(title=title)
-    serializer = TaskSerializer(instance=tasks, data=request.data)
+    serializer = BotTaskSerializer(instance=tasks, data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
     serializer.save()
