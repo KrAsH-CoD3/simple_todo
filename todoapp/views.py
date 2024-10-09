@@ -1,9 +1,15 @@
 # from django.shortcuts import render
+from nt import environ
 from django.db.models.manager import BaseManager
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import TaskSerializer
 from .models import Task
+
+from django.core.mail import send_mail
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 # Create your views here.
@@ -39,6 +45,13 @@ def task_create(request) -> Response:
     if not task.is_valid():
         return Response(task.errors, status=400)
     task.save()
+    send_mail(
+        "Task created successfully",
+        f"Welcome to our API.\nYou have successfully created the task \"{request.data['title']}\". 🎉",
+        environ['EMAIL_HOST_USER'],
+        [request.data['email']],
+        fail_silently=True,
+    )
     return Response(task.data, status=201)
 
 @api_view(['PATCH'])
