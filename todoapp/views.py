@@ -1,5 +1,5 @@
 # from django.shortcuts import render
-from nt import environ
+from os import environ
 from django.db.models.manager import BaseManager
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
