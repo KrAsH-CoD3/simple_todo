@@ -13,11 +13,11 @@ def index(request) -> Response:
     return Response({
         'message': 'Welcome to the TODO APP ✅',
         'urls': {
-            'List': '/task-list/',
-            'Detail View': '/task-detail/<int:pk>/',
-            'Create': '/task-create/',
-            'Update': '/task-update/<int:pk>/',
-            'Delete': '/task-delete/<int:pk>/',
+            'List': '/api/task-list/',
+            'Detail View': '/api/task-detail/<int:pk>/',
+            'Create': '/api/task-create/',
+            'Update': '/api/task-update/<int:pk>/',
+            'Delete': '/api/task-delete/<int:pk>/',
         }
     })
 
