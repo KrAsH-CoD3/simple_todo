@@ -72,6 +72,7 @@ def task_delete(request, pk) -> Response:
         'message': 'Task deleted successfully ✅', 
         'task': {
             'title': task.title,
+            'email': task.email,
             'completed': task.completed,
         }
     })
