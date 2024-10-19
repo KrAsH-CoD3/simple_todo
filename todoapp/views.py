@@ -29,7 +29,7 @@ def index(request) -> Response:
 
 @api_view(['GET'])
 def task_list(request) -> Response:
-    tasks: BaseManager[Task] = Task.objects.all()
+    tasks: BaseManager[Task] = Task.objects.all().order_by('-id')
     serializer = TaskSerializer(tasks, many=True)
     return Response(serializer.data)
 
@@ -45,13 +45,18 @@ def task_create(request) -> Response:
     if not task.is_valid():
         return Response(task.errors, status=400)
     task.save()
-    send_mail(
-        "Task created successfully",
-        f"Welcome to our API.\nYou have successfully created the task \"{request.data['title']}\". 🎉",
-        environ['EMAIL_HOST_USER'],
-        [request.data['email']],
-        fail_silently=True,
-    )
+
+    try:
+        send_mail(
+            "Task created successfully",
+            f"Welcome to our API.\nYou have successfully created the task \"{request.data['title']}\". 🎉",
+            environ['EMAIL_HOST_USER'],
+            [request.data['email']],
+            fail_silently=True,
+        )
+    except (KeyError):
+        print("No email provided")
+    
     return Response(task.data, status=201)
 
 @api_view(['PATCH'])
