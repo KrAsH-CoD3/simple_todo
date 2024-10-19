@@ -74,15 +74,22 @@
             <div id="form-wrapper">
                 <h3> Welcome to simple ToDo 👋 </h3>
 				<form id="form">
-					<div class="flex-wrapper">
-						<div style="flex: 6">
-							<input id="title" class="form-control" type="text" name="title" placeholder="Add task">
-						</div>
-						<div style="flex: 1">
-							<input id="submit" class="btn" type="submit" >
-						</div>
-					</div>
-				</form>
+                    <div class="flex-wrapper mb-3">
+                        <div style="flex: 6">
+                            <input id="title" class="form-control" type="text" name="title" placeholder="Add task">
+                        </div>
+                        <div style="flex: 1">
+                            <input id="submit" class="btn btn-primary" type="submit">
+                        </div>
+                    </div>
+                
+                    <!-- Spinner below the input and submit button, centered horizontally -->
+                    <div class="text-center">
+                        <span id="spinner" class="spinner-border spinner-border-lg d-none" role="status" aria-hidden="true"></span>
+                    </div>
+                </form>
+                
+                
 			</div>
 
 			<div id="list-wrapper">
@@ -128,6 +135,7 @@
 		    }
 		    return cookieValue;
 		}
+
 		var csrftoken = getCookie('csrftoken');
 
 		var activeItem = null
@@ -135,14 +143,30 @@
         const baseURL = window.location.hostname === '127.0.0.1' 
             ? 'http://127.0.0.1:8000' 
             : 'https://simple-todo-5824.onrender.com'; 
-        
+               
+        var button = document.getElementById('submit');
+        var spinner = document.getElementById('spinner');
+
+        function showLoader(){
+            // Show the spinner and disable the button
+            spinner.classList.remove('d-none');
+            button.setAttribute('disabled', true);
+        }
+
+        function hideLoader(){
+            // Hide the spinner and re-enable the button
+            spinner.classList.add('d-none');
+            button.removeAttribute('disabled');
+        }
+
 		buildList()
 
 		function buildList(){
 			var wrapper = document.getElementById('list-wrapper')
-			//wrapper.innerHTML = ''
 
 			var url = `${baseURL}/api/task-list/`
+
+            showLoader() // show loader before fetch
 
 			fetch(url)
 			.then((resp) => resp.json())
@@ -152,15 +176,12 @@
 				var list = data
 				for (var i in list){
 
-
 					try{
 						document.getElementById(`data-row-${i}`).remove()
 					}catch(err){
 
 					}
 			
-
-
 					var title = `<span class="title">${list[i].title}</span>`
 					if (list[i].completed == true){
 						title = `<strike class="title">${list[i].title}</strike>`
@@ -206,31 +227,39 @@
 
 					//Immediatly Invoked Function (IIF) + Closure for saving current loop item in memory
 					editBtn.addEventListener('click', (() => {
+                        // showLoader()
 
 						let item = list[i]
 						return () => {
 							editItem(item)
+                            // hideLoader()
 						}
 					})())
 
 
 					deleteBtn.addEventListener('click', (function(item){
+                        // showLoader()
+
 						return function(){
 							deleteItem(item)
+                            // hideLoader()
 						}
 					})(list[i]))
 
                     
 					title.addEventListener('click', (function(item){
+                        // showLoader()
+
 						return function(){
 							strikeUnstrike(item)
+                            // hideLoader()
 						}
 					})(list[i]))
 
 
 				}
-
-
+                
+                hideLoader() // Hide loader after fetch
 			})
 		}
 
@@ -248,8 +277,9 @@
 				activeItem = null
 			}
             
+            showLoader() // Display loader before crating or editing task
+
 			var title = document.getElementById('title').value
-            console.log(reqMethod)
 			fetch(url, {
 				method: reqMethod,
 				headers:{
@@ -261,6 +291,8 @@
 			).then(function(response){
 				buildList()
 				document.getElementById('form').reset()
+
+                // hideLoader()
 			})
 		})
 
