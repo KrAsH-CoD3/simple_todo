@@ -159,7 +159,7 @@
             button.removeAttribute('disabled');
         }
 
-		buildList()
+		buildList() // Get list of tasks when we load the webpage initially
 
 		function buildList(){
 			var wrapper = document.getElementById('list-wrapper')
@@ -227,32 +227,23 @@
 
 					//Immediatly Invoked Function (IIF) + Closure for saving current loop item in memory
 					editBtn.addEventListener('click', (() => {
-                        // showLoader()
-
 						let item = list[i]
 						return () => {
 							editItem(item)
-                            // hideLoader()
 						}
 					})())
 
 
 					deleteBtn.addEventListener('click', (function(item){
-                        // showLoader()
-
 						return function(){
 							deleteItem(item)
-                            // hideLoader()
 						}
 					})(list[i]))
 
                     
 					title.addEventListener('click', (function(item){
-                        // showLoader()
-
 						return function(){
 							strikeUnstrike(item)
-                            // hideLoader()
 						}
 					})(list[i]))
 
@@ -308,6 +299,8 @@
 
 		function deleteItem(item){
 			console.log('Delete clicked')
+            showLoader() // Show loader before deleting 
+
 			fetch(`${baseURL}/api/task-delete/${item.id}/`, {
 				method:'DELETE', 
 				headers:{
@@ -321,6 +314,7 @@
 
 		function strikeUnstrike(item){
 			console.log('Strike clicked')
+            showLoader() // Show loader before updating 
 
 			item.completed = !item.completed
 			fetch(`${baseURL}/api/task-update/${item.id}/`, {
