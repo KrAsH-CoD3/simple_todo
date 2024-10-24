@@ -1,109 +1,55 @@
 {% extends 'frontend/base.html' %} 
 
 {% block Content %}
-	<div class="center">
-		<h1>Register</h1>
-		{% if messages %}
-			{% for message in messages %}
-				{% if message.tags == 'error' %}
-					<center><h4 style="color: firebrick;">{{message}}</h4></center>
-				{% else %}
-					<center><h4 style="color: dodgerblue;">{{message}}</h4></center>
-				{% endif %}
-			{% endfor %}
-		{% endif %}
+<div class="center">
+  <h1>Login</h1>
+  
+  {% if messages %}
+    {% for message in messages %}
+      {% if message.tags == 'error' %}
+        <center><h4 style="color: firebrick;">{{message}}</h4></center>
+      {% else %}
+        <center><h4 style="color: dodgerblue;">{{message}}</h4></center>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
 
-		<form method="post" class="needs-validation" novalidate>
-			{% csrf_token %}
-			
-			{% for field in form %}
-			<div class="form-group mb-3">
-				{# Custom label styling #}
-				<label for="{{ field.id_for_label }}" class="form-label fw-bold">
-					{{ field.label }}
-					{% if field.field.required %}
-						<span class="text-danger">*</span>
-					{% endif %}
-				</label>
-				
-				{# input field #}
-				{{ field }}
-		
-				{# Field with custom styling #}
-				<div class="input-group">
-					{% if field.name == 'username' %}
-						<span class="input-group-text">@</span>
-					{% endif %}
-					
-					{% comment %} {{ field|add_class:"form-control" }} {% endcomment %}
-					
-					{% if field.name == 'password1' %}
-						<button type="button" class="btn btn-outline-secondary" 
-								onclick="togglePassword('{{ field.id_for_label }}')">
-							👁️
-						</button>
-					{% endif %}
-				</div>
-		
-				{# Custom error display #}
-				{% if field.errors %}
-				<div class="alert alert-danger mt-1 p-2">
-					{% for error in field.errors %}
-					<small class="d-block">
-						<i class="fas fa-exclamation-circle"></i> {{ error }}
-					</small>
-					{% endfor %}
-				</div>
-				{% endif %}
-		
-				{# Custom help text with icons #}
-				{% if field.help_text %}
-				<small class="form-text text-muted">
-					<i class="fas fa-info-circle"> {{ field.help_text }} </i>
-				</small>
-				{% endif %}
-		
-				{# Field-specific custom elements #}
-				{% if field.name == 'email' %}
-				<small class="text-info">
-					<i class="fas fa-shield-alt"></i> We'll never share your email
-				</small>
-				{% endif %}
-			</div>
-			{% endfor %}
-		
-			<div class="d-grid gap-2">
-				<button type="submit" class="btn btn-primary">
-					<i class="fas fa-user-plus"></i> Register
-				</button>
-				<div class="signup_link">
-					Already have an account? 
-					<a href="{% url 'login' %}">Login</a>
-				</div>
-			</div>
-		</form>
+  <form method="POST">
+    {% csrf_token %} 
+    {{ form.as_p }} 
 
-	</div>
+
+    <!-- <div class="pass">Forgot Password?</div> -->
+    <input type="submit" value="Login">
+        <div class="signup_link">
+          Not a user? 
+          <a href="{% url 'register' %}">Signup</a>
+          <p>Forgot your Password? 
+            <a href="#">Reset Password</a>
+          </p> 
+        </div>
+  </form>
+</div>
 
 <script type="text/javascript">
   /*
-			KEY COMPONENTS:
-			"activeItem" = null until an edit button is clicked. Will contain object of item we are editing
-			"list_snapshot" = Will contain previous state of list. Used for removing extra rows on list update
-			
-			PROCESS:
-			1 - Fetch Data and build rows "buildList()"
-			2 - Create Item on form submit
-			3 - Edit Item click - Prefill form and change submit URL
-			4 - Delete Item - Send item id to delete URL
-			5 - Cross out completed task - Event handle updated item
+      KEY COMPONENTS:
+      "activeItem" = null until an edit button is clicked. Will contain object of item we are editing
+      "list_snapshot" = Will contain previous state of list. Used for removing extra rows on list update
+    	
+      PROCESS:
+      1 - Fetch Data and build rows "buildList()"
+      2 - Create Item on form submit
+      3 - Edit Item click - Prefill form and change submit URL
+      4 - Delete Item - Send item id to delete URL
+      5 - Cross out completed task - Event handle updated item
 
-			NOTES:
-			-- Add event handlers to "edit", "delete", "title"
-			-- Render with strike through items completed
-			-- Remove extra data on re-render
-			-- CSRF Token
-		*/
+      NOTES:
+      -- Add event handlers to "edit", "delete", "title"
+      -- Render with strike through items completed
+      -- Remove extra data on re-render
+      -- CSRF Token
+    */
 
   function getCookie(name) {
     var cookieValue = null;

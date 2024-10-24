@@ -6,6 +6,17 @@
 		<div id="task-container">
             <div id="form-wrapper">
                 <h3> Welcome to simple ToDo 👋 </h3>
+				
+				{% if messages %}
+					{% for message in messages %}
+						{% if message.tags == 'error' %}
+							<center><h4 style="color: firebrick;">{{message}}</h4></center>
+						{% else %}
+							<center><h4 style="color: dodgerblue;">{{message}}</h4></center>
+						{% endif %}
+					{% endfor %}
+				{% endif %}
+
 				<form id="form">
                     <div class="flex-wrapper mb-3">
                         <div style="flex: 6">
@@ -15,6 +26,12 @@
                             <input id="submit" class="btn btn-primary" type="submit">
                         </div>
                     </div>
+
+					<div>
+						<span>
+							<b><a href="{% url 'logout' %}">Logout</a></b>
+						</span>
+					</div>
                 
                     <!-- Spinner below the input and submit button, centered horizontally -->
                     <div class="text-center">
@@ -25,6 +42,7 @@
                 
 			</div>
 			
+
 			<div id="list-wrapper">
 				<!-- All tasks will be rendered here -->
 			</div>	

@@ -12,8 +12,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# Create your views here.
-
 @api_view(['GET'])
 def index(request) -> Response:
     return Response({
@@ -29,7 +27,7 @@ def index(request) -> Response:
 
 @api_view(['GET'])
 def task_list(request) -> Response:
-    tasks: BaseManager[Task] = Task.objects.all().order_by('-id')
+    tasks: BaseManager[Task] = Task.objects.all().order_by('-id') # Queryset
     serializer = TaskSerializer(tasks, many=True)
     return Response(serializer.data)
 
