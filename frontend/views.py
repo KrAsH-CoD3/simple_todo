@@ -15,7 +15,10 @@ def index(request: HttpRequest) -> HttpResponse:
     return render(request, 'frontend/task-list.html')
 
 @require_http_methods(["GET", "POST"])
-def register_user(request: HttpRequest) -> HttpResponseRedirect | HttpResponsePermanentRedirect | HttpResponse:
+def register_user(request: HttpRequest) -> HttpResponseRedirect | HttpResponse:
+    if request.user.is_authenticated:
+        return redirect('index')
+    
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
@@ -31,7 +34,10 @@ def register_user(request: HttpRequest) -> HttpResponseRedirect | HttpResponsePe
 
 
 @require_http_methods(["GET", "POST"])
-def login_user(request: HttpRequest) -> HttpResponseRedirect | HttpResponsePermanentRedirect | HttpResponse:
+def login_user(request: HttpRequest) -> HttpResponseRedirect | HttpResponse:
+    if request.user.is_authenticated:
+        return redirect('index')
+    
     if request.method == 'POST':
         form = AuthenticationForm(request, request.POST)
         if form.is_valid():

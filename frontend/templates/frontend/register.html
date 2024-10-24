@@ -30,18 +30,12 @@
 				{{ field }}
 		
 				{# Field with custom styling #}
-				<div class="input-group">
-					{% if field.name == 'username' %}
-						<span class="input-group-text">@</span>
-					{% endif %}
+				<div class="custom-styling-group">
 					
 					{% comment %} {{ field|add_class:"form-control" }} {% endcomment %}
 					
 					{% if field.name == 'password1' %}
-						<button type="button" class="btn btn-outline-secondary" 
-								onclick="togglePassword('{{ field.id_for_label }}')">
-							👁️
-						</button>
+						<small>Make sure this password tally with the password field below</small>
 					{% endif %}
 				</div>
 		

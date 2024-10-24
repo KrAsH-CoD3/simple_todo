@@ -10,3 +10,4 @@ frontend/migrations/__pycache__/
 staticfiles/
 venvTODO
 db.sqlite3
+.vscode/

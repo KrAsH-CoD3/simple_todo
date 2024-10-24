@@ -23,7 +23,7 @@ class UserRegistrationForm(UserCreationForm):
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'First name'
+            'placeholder': 'First name',
         })
     )
     
@@ -32,7 +32,8 @@ class UserRegistrationForm(UserCreationForm):
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Last name'
+            'placeholder': 'Last name',
+            'autofocus': '' # Making sure the lastname field is focused. autofocus is usually on the username field by default.
         })
     )
 
