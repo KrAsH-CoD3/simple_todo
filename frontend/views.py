@@ -1,13 +1,13 @@
 from urllib import request
 from django.shortcuts import render, redirect
-from .forms import UserRegistrationForm
+from .forms import UserRegistrationForm, LoginForm
 from django.contrib.auth.models import AbstractUser, User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 from django.views.decorators.http import require_http_methods
-from django.http import HttpRequest, HttpResponse, HttpResponsePermanentRedirect, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 
 @login_required
 @require_http_methods(["GET"])
@@ -39,7 +39,7 @@ def login_user(request: HttpRequest) -> HttpResponseRedirect | HttpResponse:
         return redirect('index')
     
     if request.method == 'POST':
-        form = AuthenticationForm(request, request.POST)
+        form = LoginForm(request, request.POST)
         if form.is_valid():
             user: User = form.get_user()
             login(request, user)
@@ -48,7 +48,7 @@ def login_user(request: HttpRequest) -> HttpResponseRedirect | HttpResponse:
             # form.add_error(None, 'Check bruv, check well => Invalid username or password')
             messages.error(request, 'Invalid username or password')
     else:
-        form = AuthenticationForm()
+        form = LoginForm()
     return render(request, 'frontend/login.html', {'form': form})
 
 
