@@ -1,19 +1,16 @@
 # from django.shortcuts import render
-from os import environ
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from django.db.models.manager import BaseManager
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.request import Request
 from .serializers import TaskSerializer
+from rest_framework import status
 from .models import Task
-
-from django.core.mail import send_mail
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
 @api_view(['GET'])
-def index(request) -> Response:
+def index(request: Request) -> Response:
     return Response({
         'message': 'Welcome to the TODO APP ✅',
         'urls': {
@@ -26,56 +23,60 @@ def index(request) -> Response:
     })
 
 @api_view(['GET'])
-def task_list(request) -> Response:
-    tasks: BaseManager[Task] = Task.objects.all().order_by('-id') # Queryset
+@permission_classes([IsAuthenticated])
+def task_list(request: Request) -> Response:
+    tasks: BaseManager[Task] = Task.objects.all().filter(user=request.user).order_by('-id') # Queryset
     serializer = TaskSerializer(tasks, many=True)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
-def task_detail(request, pk) -> Response:
-    task: Task = Task.objects.get(pk=pk)
+@permission_classes([IsAuthenticated])
+def task_detail(request: Request, pk) -> Response:
+    try:
+        task: Task = Task.objects.get(pk=pk, user=request.user) # Only fetch task if it belongs to the user
+    except Task.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
     serializer = TaskSerializer(task)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
-def task_create(request) -> Response:
+@permission_classes([IsAuthenticated])
+def task_create(request: Request) -> Response:
     task = TaskSerializer(data=request.data)
     if not task.is_valid():
-        return Response(task.errors, status=400)
-    task.save()
-
-    try:
-        send_mail(
-            "Task created successfully",
-            f"Welcome to our API.\nYou have successfully created the task \"{request.data['title']}\". 🎉",
-            environ['EMAIL_HOST_USER'],
-            [request.data['email']],
-            fail_silently=True,
-        )
-    except (KeyError):
-        print("No email provided")
-    
-    return Response(task.data, status=201)
+        return Response(task.errors, status=status.HTTP_400_BAD_REQUEST)
+    task.save(user=request.user)
+    return Response(task.data, status=status.HTTP_201_CREATED)
 
 @api_view(['PATCH'])
-def task_update(request, pk) -> Response:
-    task: Task = Task.objects.get(pk=pk)
-    serializer = TaskSerializer(instance=task, data=request.data)
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=400)
-    serializer.save()
-    return Response(serializer.data)
+@permission_classes([IsAuthenticated])
+def task_update(request: Request, pk) -> Response:
+    try:
+        task: Task = Task.objects.get(pk=pk, user=request.user) # Only fetch task if it belongs to the user
+    except Task.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    serialized_task = TaskSerializer(instance=task, data=request.data)
+    if not serialized_task.is_valid():
+        return Response(serialized_task.errors, status=status.HTTP_400_BAD_REQUEST)
+    serialized_task.save(user=request.user)
+    return Response(serialized_task.data) # status=status.HTTP_200_OK
 
 @api_view(['DELETE'])
-def task_delete(request, pk) -> Response:
-    task: Task = Task.objects.get(pk=pk)
+@permission_classes([IsAuthenticated])
+def task_delete(request: Request, pk) -> Response:
+    try:
+        task: Task = Task.objects.get(pk=pk, user=request.user) # Only fetch task if it belongs to the user
+    except Task.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
     task.delete()
     return Response({
-        'status': 200,
+        'status': status.HTTP_204_NO_CONTENT,
         'message': 'Task deleted successfully ✅', 
-        'task': {
+        'deleted task': {
             'title': task.title,
-            'email': task.email,
             'completed': task.completed,
         }
     })
