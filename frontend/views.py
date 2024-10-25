@@ -30,7 +30,8 @@ def register_user(request: HttpRequest) -> HttpResponseRedirect | HttpResponse:
 
             send_mail(
                 "Account created successfully",
-f'''Hello {form.cleaned_data["username"]},              # THIS PART IS INDENTED CUS OF HOW IT WOULD BE DISPLAYED IN THE MAIL
+# THIS PART IS INDENTED CUS OF HOW IT WOULD BE DISPLAYED IN THE MAIL
+f'''Hello {form.cleaned_data["username"]},
 Welcome to simple Todo.
 Your registration was successful.
 We the board welcome you to the simplest Todo App.
