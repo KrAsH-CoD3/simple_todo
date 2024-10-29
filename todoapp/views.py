@@ -80,3 +80,4 @@ def task_delete(request: Request, pk) -> Response:
             'completed': task.completed,
         }
     })
+
