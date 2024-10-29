@@ -29,11 +29,11 @@ def register_user(request: HttpRequest) -> HttpResponseRedirect | HttpResponse:
             user = form.save()
 
             send_mail(
-                "Account created successfully",
+                "Todo App Account Created",
 # THIS PART IS INDENTED CUS OF HOW IT WOULD BE DISPLAYED IN THE MAIL
-f'''Hello {form.cleaned_data["username"]},
-Welcome to simple Todo.
-Your registration was successful.
+f'''Hello {str(form.cleaned_data["username"]).capitalize()},
+Welcome to Simple Todo App.
+Your account was created successfully.
 We the board welcome you to the simplest Todo App.
 Cheers mate. 🎉''',
                 environ['EMAIL_HOST_USER'],

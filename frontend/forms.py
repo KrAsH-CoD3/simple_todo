@@ -13,33 +13,48 @@ class UserRegistrationForm(UserCreationForm):
         widget=forms.EmailInput(attrs={
             # 'class': 'form-control',
             'placeholder': 'Enter your email',
-            'id': 'Tag_id_would_be_here'
+            'id': 'Tag_id_would_be_here',
         }),
-        help_text="Use gmail to get registration mail.",
+        help_text="An Email is a must.",
     )
     
     first_name = forms.CharField(
         max_length=30,
-        required=True,
+        required=False,
         widget=forms.TextInput(attrs={
             # 'class': 'form-control',
             'placeholder': 'First name',
+            'autofocus': '' # Making sure the firstname field is focused. autofocus is usually on the username field by default.
         })
     )
     
     last_name = forms.CharField(
         max_length=30,
-        required=True,
+        required=False,
         widget=forms.TextInput(attrs={
             # 'class': 'form-control',
             'placeholder': 'Last name',
-            'autofocus': '' # Making sure the lastname field is focused. autofocus is usually on the username field by default.
         })
     )
 
+    password1 = forms.CharField(
+        required=True,
+        widget=forms.PasswordInput(attrs={
+            'placeholder': 'Password',
+        })
+    )
+
+    password2 = forms.CharField(
+        required=True,
+        widget=forms.PasswordInput(attrs={
+            'placeholder': 'Confirm Password',
+        })
+    )
+
+
     class Meta:
         model = get_user_model()
-        fields = ['first_name', 'last_name', 'username', 'email', 'password1', 'password2']
+        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
