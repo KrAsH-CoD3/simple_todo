@@ -9,3 +9,4 @@ dj-database-url # Database URLs
 psycopg2-binary # PostgreSQL database
 whitenoise # Serving static files
 django-cors-headers==4.4.0
+djangorestframework-simplejwt
