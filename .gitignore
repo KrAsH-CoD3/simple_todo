@@ -1,5 +1,7 @@
 .env
 todo/__pycache__/
+accounts/__pycache__/
+accounts/migrations/__pycache__/
 todo/settings/__pycache__/
 todoapp/__pycache__/
 todoapp/migrations/__pycache__
