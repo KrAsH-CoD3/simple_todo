@@ -4,7 +4,6 @@ from django.contrib.auth import models as auth_models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from django.utils import timezone
 
 
 class CustomUserManager(auth_models.BaseUserManager):
@@ -75,7 +74,9 @@ class CustomUser(auth_models.AbstractBaseUser, auth_models.PermissionsMixin):
     is_active = db_models.BooleanField(default=True)
     is_staff = db_models.BooleanField(default=False)
     is_superuser = db_models.BooleanField(default=False)
-    date_joined = db_models.DateTimeField(default=timezone.now)
+    is_verified = db_models.BooleanField(default=False)
+    date_joined = db_models.DateTimeField(auto_now_add=True)
+    last_login = db_models.DateTimeField(auto_now=True)
 
     USERNAME_FIELD = 'email'
     # REQUIRED_FIELDS = ['username'] # For creating superuser using `createsuperuser` command
@@ -101,9 +102,12 @@ class CustomUser(auth_models.AbstractBaseUser, auth_models.PermissionsMixin):
 
 class OneTimePassword(db_models.Model):
     user = db_models.ForeignKey(CustomUser, on_delete=db_models.CASCADE)
-    otp_code = db_models.CharField(max_length=6)
+    otp_code = db_models.CharField(max_length=6, verbose_name=_('OTP Code'))
     created = db_models.DateTimeField(auto_now_add=True)
     
     class Meta:
         verbose_name = 'One Time Password'
         verbose_name_plural = 'One Time Passwords'
+
+    def __str__(self):
+        return f"{self.user.email} OTP Code"
