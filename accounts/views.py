@@ -1,28 +1,53 @@
+from csv import Error
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+
+from accounts.models import OneTimePassword
 from .serializers import UserRegisterSerializer
 from django.contrib.auth import get_user_model
+from .utils import send_code_to_user
 
 User = get_user_model() # Get the current active user model(CustomUser)
 
 
-class UserRegisterView(generics.CreateAPIView):
-    permission_classes = [AllowAny]
+# class UserRegisterView(generics.CreateAPIView):
+#     permission_classes = [AllowAny]
+#     serializer_class = UserRegisterSerializer
+#     queryset = User.objects.all()
+
+class UserRegisterView(generics.GenericAPIView):
     serializer_class = UserRegisterSerializer
-    queryset = User.objects.all()
 
-# class UserRegisterView(generics.GenericAPIView):
-    # def post(self, request, *args, **kwargs) -> Response:
-    #     serializer = self.serializer_class(data=request.data)
-    #     if serializer.is_valid(raise_exception=True):
-    #         serializer.save() # Returns the user class (CustomUser in this case)
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, *args, **kwargs) -> Response:
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save() # Returns the user class (CustomUser in this case)
 
+            send_code_to_user(serializer.data['email'])
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VerifyUserEmailView(generics.GenericAPIView):
+    def post(self, request):
+        otp_code = request.data.get('otp_code')
+        try:
+            user_code_object = OneTimePassword.objects.get(otp_code=otp_code)
+            user = user_code_object.user
+            if not user.is_verified:
+                user.is_verified = True
+                user.save()
+                return Response({'message': 'Successfully verified user'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'message': 'User already verified'}, status=status.HTTP_400_BAD_REQUEST)
+        except Error as e: # OneTimePassword.DoesNotExist
+            print("Error:", e)
+            return Response({'message': 'Invalid OTP Code'}, status=status.HTTP_400_BAD_REQUEST)
 
 # class UserRegisterView(generics.CreateAPIView):
 #     permission_classes = [AllowAny]

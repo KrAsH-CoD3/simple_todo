@@ -43,7 +43,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def validate_email(self, email):
         if User.objects.filter(email=email).exists():
             raise serializers.ValidationError('Email already exists!')
-        if '@admin.com' not in email:
+        if '@gmail.com' not in email:
             raise serializers.ValidationError('Admin email only!')
         return email
     
