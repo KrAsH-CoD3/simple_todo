@@ -7,5 +7,6 @@ urlpatterns: list[URLResolver] = [
     path('', include('frontend.urls')),
     path('api/', include('todoapp.urls')),
     path('bot/', include('bot_tasks_api.urls')),
+    path('accounts/', include('accounts.urls')),
 ]
 
