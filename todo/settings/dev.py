@@ -6,7 +6,7 @@ from .common import *
 DEBUG = True
 ALLOWED_HOSTS = []
 
-USE_SERVER_DB = True
+USE_SERVER_DB = False
 
 
 # Database
