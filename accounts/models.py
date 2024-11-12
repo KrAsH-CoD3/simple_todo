@@ -1,13 +1,13 @@
 # from time import timezone
-from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.db import models as db_models
+from django.contrib.auth import models as auth_models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 
-class CustomUserManager(BaseUserManager):
+class CustomUserManager(auth_models.BaseUserManager):
     def email_validator(self, email):
         try:
             validate_email(email) # Making sure it follow RFC email format
@@ -58,24 +58,24 @@ class CustomUserManager(BaseUserManager):
         )
 
 
-class CustomUser(AbstractBaseUser, PermissionsMixin):
+class CustomUser(auth_models.AbstractBaseUser, auth_models.PermissionsMixin):
     # Since null and blank are not defined in the email field and email is used as username so it is definitely required
-    email = models.EmailField(unique=True, max_length=50, verbose_name='Email address')
+    email = db_models.EmailField(unique=True, max_length=50, verbose_name='Email address')
 
     # These fields are REQUIRED since both null and blank are False
-    first_name = models.CharField(max_length=30, null=False, blank=False, verbose_name=_("First Name")) 
-    username = models.CharField(max_length=30, null=False, blank=False, verbose_name=_("Username"))
+    first_name = db_models.CharField(max_length=30, null=False, blank=False, verbose_name=_("First Name")) 
+    username = db_models.CharField(max_length=30, null=False, blank=False, verbose_name=_("Username"))
 
     # null is false if not defined in the field
     # (meaning that field must be passed when creating/updating a user if no default value is provided)
     # Optional field since we have default value. NOTE: this is for DB level
     # If last_name is not passed in serializer, it will raise error since it is required in the user model creation
-    last_name = models.CharField(max_length=30, blank=True, default='', verbose_name=_("Last Name")) 
+    last_name = db_models.CharField(max_length=30, blank=True, default='', verbose_name=_("Last Name")) 
 
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-    is_superuser = models.BooleanField(default=False)
-    date_joined = models.DateTimeField(default=timezone.now)
+    is_active = db_models.BooleanField(default=True)
+    is_staff = db_models.BooleanField(default=False)
+    is_superuser = db_models.BooleanField(default=False)
+    date_joined = db_models.DateTimeField(default=timezone.now)
 
     USERNAME_FIELD = 'email'
     # REQUIRED_FIELDS = ['username'] # For creating superuser using `createsuperuser` command
@@ -97,3 +97,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         if self.first_name == self.last_name:
             raise ValidationError('First name and last name cannot be the same.')
         return self
+    
+
+class OneTimePassword(db_models.Model):
+    user = db_models.ForeignKey(CustomUser, on_delete=db_models.CASCADE)
+    otp_code = db_models.CharField(max_length=6)
+    created = db_models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'One Time Password'
+        verbose_name_plural = 'One Time Passwords'
