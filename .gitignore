@@ -4,3 +4,4 @@ staticfiles/
 venvTODO
 db.sqlite3
 .vscode/
+todo/settings/dev.py
