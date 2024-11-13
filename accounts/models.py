@@ -4,6 +4,7 @@ from django.contrib.auth import models as auth_models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class CustomUserManager(auth_models.BaseUserManager):
@@ -89,6 +90,13 @@ class CustomUser(auth_models.AbstractBaseUser, auth_models.PermissionsMixin):
     @property
     def get_full_name(self):
         return f'{self.first_name} {self.last_name}'.strip()
+    
+    def tokens(self):
+        refresh = RefreshToken.for_user(self)
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token)
+        }
 
     class Meta:
         verbose_name = 'User'
