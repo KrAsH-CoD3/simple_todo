@@ -1,13 +1,12 @@
-from csv import Error
 from rest_framework import generics, status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 
 from accounts.models import OneTimePassword
-from .serializers import UserRegisterSerializer
+from .serializers import UserRegisterSerializer, UserLoginSerializer
 from django.contrib.auth import get_user_model
 from .utils import send_code_to_user
 
@@ -45,9 +44,30 @@ class VerifyUserEmailView(generics.GenericAPIView):
                 return Response({'message': 'Successfully verified user'}, status=status.HTTP_200_OK)
             else:
                 return Response({'message': 'User already verified'}, status=status.HTTP_400_BAD_REQUEST)
-        except Error as e: # OneTimePassword.DoesNotExist
+        except Exception as e: # OneTimePassword.DoesNotExist
             print("Error:", e)
             return Response({'message': 'Invalid OTP Code'}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class UserLoginView(generics.GenericAPIView):
+    serializer_class = UserLoginSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        if serializer.is_valid(raise_exception=True):
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TestUserLoginView(generics.GenericAPIView):
+    serializer_class = IsAuthenticated
+
+    def get(self, request, *args, **kwargs):
+        return Response({
+            'message': 'Successfully logged in',
+            'is_authenticated': request.user.is_authenticated,
+            'is_verified': request.user.is_verified,
+        }, status=status.HTTP_200_OK)
 
 # class UserRegisterView(generics.CreateAPIView):
 #     permission_classes = [AllowAny]
@@ -61,17 +81,17 @@ class VerifyUserEmailView(generics.GenericAPIView):
 #         return Response(UserRegisterSerializer(user).data, status=201)
 
 
-class UserLoginView(APIView):
-    permission_classes = [AllowAny]
+# class UserLoginView(APIView):
+#     permission_classes = [AllowAny]
 
-    def post(self, request, *args, **kwargs):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        user = User.objects.get(username=username)
-        if user.check_password(password):
-            token = user.token_for_user(RefreshToken)
-            return Response({'token': token}, status=200)
-        return Response({'message': 'Invalid username or password'}, status=401)
+#     def post(self, request, *args, **kwargs):
+#         username = request.data.get('username')
+#         password = request.data.get('password')
+#         user = User.objects.get(username=username)
+#         if user.check_password(password):
+#             token = user.token_for_user(RefreshToken)
+#             return Response({'token': token}, status=200)
+#         return Response({'message': 'Invalid username or password'}, status=401)
 
 
 class UserLogoutView(APIView):

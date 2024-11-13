@@ -1,9 +1,9 @@
-# from pyexpat import model
-from csv import Error
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework.validators import UniqueValidator
 # from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import authenticate
+from rest_framework.exceptions import AuthenticationFailed
 
 User = get_user_model() # Get the current active user model(CustomUser)
 
@@ -65,8 +65,30 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         )
 
 
-# class CustomUserSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = User
-#         fields = ('email', 'first_name', 'last_name', 'username', 'is_active', 'is_staff', 'is_superuser', 'date_joined')
-#         read_only_fields = ('date_joined',)
+class UserLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True, max_length=50)
+    password = serializers.CharField(max_length=30, required=True, write_only=True)
+    full_name = serializers.CharField(max_length=60, read_only=True)
+    access_token = serializers.CharField(max_length=60, read_only=True)
+    refresh_token = serializers.CharField(max_length=60, read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['email', 'password', 'full_name', 'access_token', 'refresh_token']
+
+    def validate(self, data):
+        email = data.get('email')
+        password = data.get('password')
+        user = authenticate(email=email, password=password)
+        if user is None:
+            raise AuthenticationFailed('Invalid email or password')
+        if not user.is_verified:
+            raise AuthenticationFailed('User is not verified')
+        user_tokens = user.tokens()
+        return {
+            'email': email, 
+            'full_name': user.get_full_name,
+            # 'password': password,
+            'access_token': user_tokens['access'],
+            'refresh_token': user_tokens['refresh'],
+        }
