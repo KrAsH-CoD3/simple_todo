@@ -2,6 +2,7 @@ from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 
@@ -41,18 +42,18 @@ class VerifyUserEmailView(generics.GenericAPIView):
             if not user.is_verified:
                 user.is_verified = True
                 user.save()
-                return Response({'message': 'Successfully verified user'}, status=status.HTTP_200_OK)
+                return Response({'message': 'Successfully verified user.'}, status=status.HTTP_200_OK)
             else:
-                return Response({'message': 'User already verified'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': 'User already verified.'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e: # OneTimePassword.DoesNotExist
             print("Error:", e)
-            return Response({'message': 'Invalid OTP Code'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Invalid OTP Code.'}, status=status.HTTP_400_BAD_REQUEST)
         
 
 class UserLoginView(generics.GenericAPIView):
     serializer_class = UserLoginSerializer
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid(raise_exception=True):
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -60,13 +61,11 @@ class UserLoginView(generics.GenericAPIView):
 
 
 class TestUserLoginView(generics.GenericAPIView):
-    serializer_class = IsAuthenticated
+    serializer_class = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request):
         return Response({
-            'message': 'Successfully logged in',
-            'is_authenticated': request.user.is_authenticated,
-            'is_verified': request.user.is_verified,
+            'message': 'Successfully logged in.',
         }, status=status.HTTP_200_OK)
 
 # class UserRegisterView(generics.CreateAPIView):
@@ -95,15 +94,19 @@ class TestUserLoginView(generics.GenericAPIView):
 
 
 class UserLogoutView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        token = request.data.get('token')
+    def post(self, request):
         try:
-            RefreshToken.objects.get(key=token)
-        except RefreshToken.DoesNotExist:
-            return Response({'message': 'Invalid token'}, status=401)
-        return Response({'message': 'Successfully logged out'}, status=200)
+            print(request.data)
+            token = request.data.get('refresh', None)
+            if not token: # Does not exist in request
+                return Response({'message': 'No refresh token provided'}, status=status.HTTP_400_BAD_REQUEST)
+            token =  RefreshToken(token)
+            token.blacklist()
+            return Response({'message': 'Successfully logged out.'}, status=status.HTTP_205_RESET_CONTENT)
+        except TokenError:
+            return Response({'message': 'Invalid token or expired token.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class UserRefreshView(APIView):

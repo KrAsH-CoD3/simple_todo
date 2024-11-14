@@ -1,5 +1,5 @@
 import random
-from django.core.mail import EmailMessage , send_mail
+from django.core.mail import EmailMessage
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from .models import OneTimePassword
@@ -18,7 +18,8 @@ Welcome to Simple Todo App.
 Your account was created successfully.
 Your OTP Code is `{otp_code}`.'''
     from_email = settings.DEFAULT_FROM_EMAIL
-    OneTimePassword.objects.create(user=user, otp_code=otp_code)
+
+    OneTimePassword.objects.create(user=user, otp_code=otp_code) # Create OTP associated to the user
 
     email_to_send = EmailMessage(
         subject=subject,
@@ -26,4 +27,5 @@ Your OTP Code is `{otp_code}`.'''
         from_email=from_email, 
         to=[email]
     )
-    email_to_send.send(fail_silently=False)
+    # email_to_send.send(fail_silently=False)
+    print(otp_code)
