@@ -112,6 +112,91 @@
 
 		buildList() // Get list of tasks when we load the webpage initially
 
+		// Function to get the access token from localStorage
+		function getAccessToken() {
+			return localStorage.getItem('access_token');
+		}
+
+		// Function to get the refresh token from localStorage
+		function getRefreshToken() {
+			return localStorage.getItem('refresh_token');
+		}
+
+		// Function to set the new access token in localStorage
+		function setAccessToken(token) {
+			localStorage.setItem('access_token', token);
+		}
+
+		// Function to set the new refresh token in localStorage (optional, if token rotation is enabled)
+		function setRefreshToken(token) {
+			localStorage.setItem('refresh_token', token);
+		}
+
+		// Function to make an authenticated request
+		function makeAuthenticatedRequest(url, method = 'GET', body = null) {
+			const accessToken = getAccessToken();
+
+			const headers = new Headers();
+			headers.append('Authorization', 'Bearer ' + accessToken);
+			if (body) {
+				headers.append('Content-Type', 'application/json');
+			}
+
+			const options = {
+				method: method,
+				headers: headers,
+			};
+			if (body) {
+				options.body = JSON.stringify(body);
+			}
+
+			return fetch(url, options).then(response => {
+				if (response.status === 401) { // Token expired
+					const refreshToken = getRefreshToken();
+					return refreshAccessToken(refreshToken).then(newTokens => {
+						setAccessToken(newTokens.access);
+						if (newTokens.refresh) {
+							setRefreshToken(newTokens.refresh);
+						}
+						// Retry the original request with the new access token
+						return fetch(url, {
+							method: method,
+							headers: {
+								'Authorization': 'Bearer ' + newTokens.access,
+								'Content-Type': 'application/json',
+							},
+							body: options.body ? JSON.stringify(body) : null,
+						}).then(retryResponse => retryResponse.json());
+					});
+				}
+
+				if (!response.ok) {
+					throw new Error('Failed to fetch data');
+				}
+
+				return response.json(); // Convert to JSON if successful
+			}).catch(error => {
+				console.error(error);
+				alert('An error occurred while fetching data');
+			});
+		}
+
+		// Function to refresh the access token using the refresh token
+		function refreshAccessToken(refreshToken) {
+			return fetch(`${baseURL}/accounts/auth/token/refresh/`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ refresh: refreshToken }),
+			}).then(response => {
+				if (!response.ok) {
+					throw new Error('Failed to refresh token');
+				}
+				return response.json(); // Return the new tokens { access, refresh }
+			});
+		}
+
 		function buildList(){
 			var wrapper = document.getElementById('list-wrapper')
 
@@ -119,7 +204,7 @@
 
             showLoader() // show loader before fetch
 
-			fetch(url)
+			makeAuthenticatedRequest(url)
 			.then((resp) => resp.json())
 			.then(function(data){
 				console.log('Data:', data)
