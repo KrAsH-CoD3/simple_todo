@@ -23,7 +23,7 @@ def index(request: Request) -> Response:
     })
 
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def task_list(request: Request) -> Response:
     tasks: BaseManager[Task] = Task.objects.all().filter(user=request.user).order_by('-id') # Queryset
     serializer = TaskSerializer(tasks, many=True)

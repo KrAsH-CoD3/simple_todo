@@ -29,18 +29,18 @@ def register_user(request: HttpRequest) -> HttpResponseRedirect | HttpResponse:
         if form.is_valid():
             user = form.save()
 
-            send_mail(
-                "Todo App Account Created",
-# THIS PART IS INDENTED CUS OF HOW IT WOULD BE DISPLAYED IN THE MAIL
-f'''Hello {str(form.cleaned_data["username"]).capitalize()},
-Welcome to Simple Todo App.
-Your account was created successfully.
-We the board welcome you to the simplest Todo App.
-Cheers mate. 🎉''',
-                environ['EMAIL_HOST_USER'],
-                [form.cleaned_data['email']],
-                fail_silently=True,
-            )
+#             send_mail(
+#                 "Todo App Account Created",
+# # THIS PART IS INDENTED CUS OF HOW IT WOULD BE DISPLAYED IN THE MAIL
+# f'''Hello {str(form.cleaned_data["username"]).capitalize()},
+# Welcome to Simple Todo App.
+# Your account was created successfully.
+# We the board welcome you to the simplest Todo App.
+# Cheers mate. 🎉''',
+#                 environ['EMAIL_HOST_USER'],
+#                 [form.cleaned_data['email']],
+#                 fail_silently=True,
+#             )
                 
             login(request, user)  # Log the user in
             messages.success(request, 'Registration successful!')
