@@ -22,7 +22,7 @@ User = get_user_model() # Get the current active user model(CustomUser)
 class UserRegisterView(generics.GenericAPIView):
     serializer_class = UserRegisterSerializer
 
-    def post(self, request, *args, **kwargs) -> Response:
+    def post(self, request) -> Response:
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save() # Returns the user class (CustomUser in this case)
@@ -98,7 +98,6 @@ class UserLogoutView(APIView):
 
     def post(self, request):
         try:
-            print(request.data)
             token = request.data.get('refresh', None)
             if not token: # Does not exist in request
                 return Response({'message': 'No refresh token provided'}, status=status.HTTP_400_BAD_REQUEST)
@@ -112,7 +111,7 @@ class UserLogoutView(APIView):
 class UserRefreshView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         token = request.data.get('token')
         try:
             RefreshToken.objects.get(key=token)

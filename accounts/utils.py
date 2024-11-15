@@ -28,4 +28,4 @@ Your OTP Code is `{otp_code}`.'''
         to=[email]
     )
     # email_to_send.send(fail_silently=False)
-    print(otp_code)
+    print("OTP Code: " + otp_code)
