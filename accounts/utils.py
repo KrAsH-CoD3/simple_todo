@@ -8,6 +8,8 @@ User = get_user_model()
 
 generateOTP = lambda: ''.join(random.choices('123456789', k=6))
 
+from_email = settings.DEFAULT_FROM_EMAIL
+
 def send_code_to_user(email):   
     subject = "Email Verification Code"
     otp_code = generateOTP()
@@ -17,7 +19,7 @@ def send_code_to_user(email):
 Welcome to Simple Todo App.
 Your account was created successfully.
 Your OTP Code is `{otp_code}`.'''
-    from_email = settings.DEFAULT_FROM_EMAIL
+    from_email = from_email
 
     OneTimePassword.objects.create(user=user, otp_code=otp_code) # Create OTP associated to the user
 
@@ -29,3 +31,19 @@ Your OTP Code is `{otp_code}`.'''
     )
     # email_to_send.send(fail_silently=False)
     print("OTP Code: " + otp_code)
+
+def send_reset_password_email(email, subject, email_body):
+    EmailMessage(
+        subject=subject,
+        body=email_body,
+        from_email=from_email, 
+        to=[email]
+    ).send()
+
+# def send_verification_email(email, subject, email_body, from_email):
+#     EmailMessage(
+#         subject=subject,
+#         body=email_body,
+#         from_email=from_email, 
+#         to=[email]
+#     ).send()
