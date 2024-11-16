@@ -13,6 +13,9 @@ urlpatterns = [
     path('test-login/', views.TestUserLoginView.as_view(), name='test_login'),
     path('logout/', views.UserLogoutView.as_view(), name='logout'),
     path('refresh/', views.UserRefreshView.as_view(), name='refresh'),
+    path('password-reset/', views.UserResetPasswordView.as_view(), name='password_reset'),
+    path('password-reset-confirm/<uidb64>/<token>/', views.UserConfirmPasswordResetView.as_view(), name='password_reset_confirm'),
+    path('set-new-password/', views.UserSetNewPasswordView.as_view(), name='set_new_password'),
 
     # JWT
     path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

@@ -1,23 +1,27 @@
 from rest_framework import generics, status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import smart_str, DjangoUnicodeDecodeError
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 from accounts.models import OneTimePassword
-from .serializers import UserRegisterSerializer, UserLoginSerializer
+from todoapp import serializers
+from .serializers import (
+    UserRegisterSerializer, 
+    UserLoginSerializer, 
+    UserPasswordResetSerializer,
+    UserSetNewPasswordSerializer
+)
 from django.contrib.auth import get_user_model
 from .utils import send_code_to_user
 
 User = get_user_model() # Get the current active user model(CustomUser)
 
-
-# class UserRegisterView(generics.CreateAPIView):
-#     permission_classes = [AllowAny]
-#     serializer_class = UserRegisterSerializer
-#     queryset = User.objects.all()
 
 class UserRegisterView(generics.GenericAPIView):
     serializer_class = UserRegisterSerializer
@@ -68,30 +72,6 @@ class TestUserLoginView(generics.GenericAPIView):
             'message': 'Successfully logged in.',
         }, status=status.HTTP_200_OK)
 
-# class UserRegisterView(generics.CreateAPIView):
-#     permission_classes = [AllowAny]
-#     serializer_class = UserRegisterSerializer
-#     queryset = User.objects.all()
-
-#     def post(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         user = serializer.save()
-#         return Response(UserRegisterSerializer(user).data, status=201)
-
-
-# class UserLoginView(APIView):
-#     permission_classes = [AllowAny]
-
-#     def post(self, request, *args, **kwargs):
-#         username = request.data.get('username')
-#         password = request.data.get('password')
-#         user = User.objects.get(username=username)
-#         if user.check_password(password):
-#             token = user.token_for_user(RefreshToken)
-#             return Response({'token': token}, status=200)
-#         return Response({'message': 'Invalid username or password'}, status=401)
-
 
 class UserLogoutView(APIView):
     permission_classes = [IsAuthenticated]
@@ -109,14 +89,56 @@ class UserLogoutView(APIView):
 
 
 class UserRefreshView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         token = request.data.get('token')
         try:
             RefreshToken.objects.get(key=token)
         except RefreshToken.DoesNotExist:
-            return Response({'message': 'Invalid token'}, status=401)
+            return Response({'message': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
         user = User.objects.get(username=token.user.username)
         refreshed_token = user.token_for_user(RefreshToken)
-        return Response({'token': refreshed_token}, status=200)
+        return Response({'token': refreshed_token}, status=status.HTTP_200_OK)
+
+
+class UserResetPasswordView(generics.GenericAPIView):
+    serializer_class = UserPasswordResetSerializer
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'message': 'Password reset email sent successfully'}, status=status.HTTP_200_OK)
+    
+
+class UserConfirmPasswordResetView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, uidb64, token):
+        try:
+            uid = smart_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(id=uid)
+        except User.DoesNotExist:
+                return Response({'message': 'User does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+        except DjangoUnicodeDecodeError:
+            return Response({'message': 'Invalid UID format. Cannot decode.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+        if not PasswordResetTokenGenerator().check_token(user, token):
+            return Response({'message': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            'success' : True,
+            'message': 'Credentials are valid. Continue to reset password.',
+        }, status=status.HTTP_200_OK)
+    
+
+class UserSetNewPasswordView(generics.GenericAPIView):
+    serializer_class = UserSetNewPasswordSerializer
+    permission_classes = [AllowAny]
+
+    def patch(self, request):
+        serializers = self.get_serializer(data=request.data)
+        serializers.is_valid(raise_exception=True)
+        # serializers.save()
+        return Response({'message': 'Password updated successfully.'}, status=status.HTTP_200_OK)
