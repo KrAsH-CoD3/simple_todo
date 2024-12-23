@@ -10,6 +10,8 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import AuthenticationFailed
 from .utils import send_reset_password_email
+from .models import Subscription
+
 
 User = get_user_model() # Get the current active user model(CustomUser)
 
@@ -148,3 +150,16 @@ class UserSetNewPasswordSerializer(serializers.Serializer):
             raise AuthenticationFailed(_('Invalid reset link.'), code=401)
 
 
+class SubscriptionSerializer(serializers.ModelSerializer):
+    is_active = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Subscription
+        fields = [
+            'id', 'user', 'plan', 'status', 'amount_paid', 
+            'reference', 'is_active', 'start_date', 'end_date', 
+        ]
+        read_only_fields = ['id', 'user', 'start_date', 'end_date', 'reference']
+
+    def get_is_active(self, obj):
+        return obj.status == 'active'

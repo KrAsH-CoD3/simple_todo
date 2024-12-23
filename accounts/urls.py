@@ -21,4 +21,9 @@ urlpatterns = [
     path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+
+    path('subscription/', views.UserinitiateSubscriptionView.as_view(), name='subscription'),
+    path('subscription/verify/', views.UserVerifySubscriptionView.as_view(), name='verify_subscription'),
+    path('subscription/list/', views.UserSubscriptionListView.as_view(), name='list_subscription'),
+    path('subscription/active/', views.ActiveSubscriptionView.as_view(), name="active_subscription"),
 ]
