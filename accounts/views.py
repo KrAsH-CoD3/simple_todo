@@ -1,3 +1,4 @@
+from uuid import uuid4
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -8,17 +9,30 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import smart_str, DjangoUnicodeDecodeError
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.db import transaction
 
-from accounts.models import OneTimePassword
+# from rest_framework.generics import ListAPIView
+
+from .models import OneTimePassword, Subscription # SAME AS BELOW
+# from accounts.models import OneTimePassword, Subscription
 from todoapp import serializers
 from .serializers import (
     UserRegisterSerializer, 
     UserLoginSerializer, 
     UserPasswordResetSerializer,
-    UserSetNewPasswordSerializer
+    UserSetNewPasswordSerializer,
+    SubscriptionSerializer
 )
 from django.contrib.auth import get_user_model
 from .utils import send_code_to_user
+from django.conf import Settings, settings
+import requests
+from .models import Subscription
+from django.utils.timezone import now
+from datetime import timedelta
+import hmac, hashlib
+from json import loads as json_loads, JSONDecodeError
+
 
 User = get_user_model() # Get the current active user model(CustomUser)
 
@@ -142,3 +156,235 @@ class UserSetNewPasswordView(generics.GenericAPIView):
         serializers.is_valid(raise_exception=True)
         # serializers.save()
         return Response({'message': 'Password updated successfully.'}, status=status.HTTP_200_OK)
+
+class UserinitiateSubscriptionView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        amount = 5000  # Example: 5000 Naira
+        headers = {
+            "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "email": user.email,
+            "amount": amount * 100,  # Convert to kobo (paystack) format
+            "reference": f"SUB-{user.id}-{uuid4().hex}",
+        }
+
+        try:
+            response = requests.post("https://api.paystack.co/transaction/initialize", json=data, headers=headers)
+            if response.status_code == 200:
+                response_data = response.json()
+                subscription = self.create_or_update_subscription(
+                    user, 
+                    "premium", 
+                    amount, 
+                    data['reference']
+                )
+                if subscription:
+                    return Response(response_data, status=status.HTTP_200_OK)
+            return Response({"error": "Payment initialization failed"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Error Occured: {e}")
+            return Response({"error": "Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def create_or_update_subscription(self, user, plan, amount, reference):
+        """
+        Create or update a subscription for a user and plan.
+        """
+        try:
+            with transaction.atomic():
+                # subscription = Subscription.objects.filter(
+                #     user=user,
+                #     plan=plan,
+                #     status__in=['expired', 'pending']  # Look for existing records
+                # ).first()
+
+                if subscription:= Subscription.objects.filter(
+                    user=user,
+                    plan=plan,
+                    status__in=['expired', 'pending', 'active']
+                ).first():
+                    if subscription.status in ['expired', 'pending']:
+                        # Update the existing subscription with the newly intiated subscription
+                        # if it status is expired or pending
+                        subscription.status = 'pending'
+                        subscription.amount_paid = amount
+                        subscription.reference = reference
+                        subscription.save()
+                    elif subscription.status == 'active': ...
+                        # DO something here if we have different subscription plans
+
+                        # # Create a new subscription if the current one is active
+                        # subscription = Subscription.objects.create(
+                        #     user=user,
+                        #     plan=plan,
+                        #     status='pending',
+                        #     amount_paid=amount,
+                        #     reference=reference  # New reference
+                        # )
+                else:
+                    # If no subscription found, create a new one
+                    subscription = Subscription.objects.create(
+                        user=user,
+                        plan=plan,
+                        status='pending',
+                        amount_paid=amount,
+                        reference=reference
+                    )
+            return subscription
+        except Exception as e:
+            print(f"Error creating/updating subscription: {str(e)}")
+            return None
+
+
+class UserVerifySubscriptionView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        reference = request.data.get('reference')
+        headers = {
+            "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+        }
+        response = requests.get(f"https://api.paystack.co/transaction/verify/{reference}", headers=headers)
+        print(response.json())
+        print(response.status_code)
+
+        if response.status_code == 200:
+            response_data = response.json()
+            if response_data['data']['status'] == 'success':
+                # Subscription.objects.create(
+                #     user=request.user,
+                #     plan='premium',
+                #     status='active',
+                #     amount_paid=response_data['data']['amount'],
+                #     reference=response_data['data']['reference']
+                # )
+                return Response({"message": "Payment verified successfully"}, status=status.HTTP_200_OK)
+        return Response({"error": "Payment verification failed"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class WebhookVerifySubscriptionView(generics.GenericAPIView):
+    ALLOWED_IPS = settings.PAYSTACK_IPS
+
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Overridden dispatch method to check if the client's IP address is allowed before processing the request.
+
+        Checks if the client's IP address is present in the `ALLOWED_IPS` list. If not, returns a 403 Forbidden response.
+        Otherwise, proceeds with the request by calling the superclass's dispatch method.
+        """
+        ip_address = self.get_client_ip(request)
+        
+        if ip_address not in self.ALLOWED_IPS:
+            return Response({'error': 'Unauthorized IP'}, status=status.HTTP_403_FORBIDDEN)
+        
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_client_ip(self, request):
+        """
+        Extracts the client's IP address from the request headers.
+        """
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+
+    def post(self, request):
+        secret_key = settings.PAYSTACK_SECRET_KEY.encode('utf-8')
+        paystack_signature = request.headers.get('X-Paystack-Signature')
+        if not paystack_signature:
+            return Response({'error': 'Missing Paystack signature'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            payload = json_loads(request.body)
+            print(f"{payload.get('event', payload) = }")
+            event_type = payload.get('event')
+            
+            if event_type == "charge.success":
+                return self.handle_charge_success(payload, secret_key, paystack_signature)
+            elif event_type == "subscription.create":
+                return self.handle_subscription_create(payload)
+            else:
+                return Response({'status': 'Unhandled Event'}, status=status.HTTP_200_OK)
+        except JSONDecodeError as e:
+            # If the payload is not JSON
+            print(f"JSONDecodeError Occured: {e}") # LOG THIS
+            return Response({'error': 'Invalid JSON payload'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # Catch other exceptions
+            print(f"Error Occured: {e}") # LOG THIS
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)        
+
+
+    def handle_charge_success(self, payload, secret_key, paystack_signature) -> Response:
+        """
+        Handle successful charge events.
+        """
+        data = payload.get('data', {})
+
+        reference = data.get('reference')
+        print(f"{data.get('reference') = }")
+        # amount = data.get('amount')
+        # customer_email = data.get('customer', {}).get('email')
+        # print(f"Payment received: {reference} - {amount} from {customer_email}") # TODO: LOG THIS
+        
+        computed_signature = hmac.new(
+            key=secret_key,
+            msg=self.request.body, # Accepts bytes and Request body is in bytes by default
+            digestmod=hashlib.sha512
+        ).hexdigest()
+
+        if computed_signature != paystack_signature:
+            return Response({'error': 'Invalid Paystack signature'}, status=status.HTTP_400_BAD_REQUEST)
+
+        subscription = Subscription.objects.filter(reference=reference).first()
+        if subscription:
+            subscription.status = 'active'
+            subscription.start_date = now()
+            subscription.end_date = now() + timedelta(days=30)
+            subscription.amount_paid = data['amount'] / 100
+            subscription.save()
+            return Response({"message": "Subscription updated successfully"}, status=status.HTTP_200_OK)
+
+        print("Your ass is an Hacker!!!")
+        # Do something else if subscription doesn't exist(likely an hacker)
+        return Response({'status': 'success'}, status=status.HTTP_200_OK)
+
+    def handle_subscription_create(self, payload):
+        """
+        Handle subscription creation events.
+        """
+        print(f"Subscription created: {payload}")
+        # Add logic to process subscription creation
+
+      
+class UserSubscriptionListView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = SubscriptionSerializer
+
+    def get(self, request):
+        subscriptions = Subscription.objects.filter(user=request.user).order_by('-start_date')
+        # print(subscriptions)
+        if subscriptions.exists():
+            subs_data = [
+                SubscriptionSerializer(subscription).data for subscription in subscriptions
+            ]
+            return Response({"status": "ok", "subscriptions": subs_data})
+        return Response({"Status": "ok", "subscriptions": []})
+
+class ActiveSubscriptionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        subscription = Subscription.objects.filter(user=request.user, status='active').first()
+        if not subscription:
+            return Response({"error": "No active subscription found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = SubscriptionSerializer(subscription)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
