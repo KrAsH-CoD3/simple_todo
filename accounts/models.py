@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.db.models import Q
 
 
 class CustomUserManager(auth_models.BaseUserManager):
@@ -107,6 +108,43 @@ class CustomUser(auth_models.AbstractBaseUser, auth_models.PermissionsMixin):
         if self.first_name == self.last_name:
             raise ValidationError('First name and last name cannot be the same.')
         return self
+    
+class Subscription(db_models.Model):
+    PLAN_CHOICES = [
+        ('free', 'Free Plan'),
+        ('premium', 'Premium Plan'),
+    ]
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('active', 'Active'),
+        ('expired', 'Expired'),
+    ]
+
+    user = db_models.ForeignKey(CustomUser, on_delete=db_models.CASCADE, related_name='subscriptions')
+    plan = db_models.CharField(max_length=10, choices=PLAN_CHOICES) #default='free'
+    status = db_models.CharField(max_length=10, choices=STATUS_CHOICES)
+    amount_paid = db_models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    reference = db_models.CharField(max_length=100, unique=True, blank=True, null=True)  # Paystack transaction ref
+    start_date = db_models.DateTimeField(auto_now_add=True)
+    end_date = db_models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Subscription'
+        verbose_name_plural = 'Subscriptions'
+
+        constraints = [
+            db_models.UniqueConstraint(
+                fields=['user', 'plan'], 
+                condition=Q(status__in=['expired', 'pending']), 
+                name='unique_pending_subscription_per_user_plan'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} - {self.plan} - {self.status}"
+
+    # def __str__(self):
+    #     return f"{self.user.username}'s subscription"
     
 
 class OneTimePassword(db_models.Model):
