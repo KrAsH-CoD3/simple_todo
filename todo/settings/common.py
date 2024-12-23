@@ -60,6 +60,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
+    "https://fcea-2c0f-f5c0-600-e41a-f933-f739-9871-268d.ngrok-free.app"
 ]
 
 CORS_ALLOW_METHODS = [
@@ -147,3 +148,6 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = True
+
+PAYSTACK_SECRET_KEY = environ.get('PAYSTACK_SECRET_KEY')
+PAYSTACK_IPS = environ.get('PAYSTACK_IPS').replace(' ', '').split(',')
