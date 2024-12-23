@@ -7,6 +7,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     *environ.get('ALLOWED_HOSTS').split(','),
+    'simple-todo-5824.onrender.com',
     'localhost',
 ]
 

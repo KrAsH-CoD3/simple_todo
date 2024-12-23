@@ -10,4 +10,4 @@ psycopg2-binary # PostgreSQL database
 whitenoise # Serving static files
 django-cors-headers==4.4.0
 djangorestframework-simplejwt
-request>=2.32.3
+requests>=2.32.3
