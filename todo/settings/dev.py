@@ -5,7 +5,10 @@ from .common import *
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = environ.get('ALLOWED_HOSTS').split(',')
+ALLOWED_HOSTS = [
+    *environ.get('ALLOWED_HOSTS').split(','),
+    'localhost',
+]
 
 USE_SERVER_DB = False
 
