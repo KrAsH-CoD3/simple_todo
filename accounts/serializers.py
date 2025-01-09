@@ -56,18 +56,16 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # print(validated_data) # validated_data is the validated data in dict
 
-        password = validated_data.pop('password1')
-        validated_data.pop('password2')
+        password, _ = validated_data.pop('password1'), validated_data.pop('password2')
         
-        # return User.objects.create_user(**validated_data) # First method
-
-        return User.objects.create_user( # Second method
+        # Explicitly defining the arg is the best as the model can be different
+        # from the serializer. E.g Model accept only 'password' instead of 'password1' and 'password2' 
+        return User.objects.create_user(
             email=validated_data['email'],
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
             username=validated_data['username'],
-            password1=password,
-            password2=password,
+            password=password,
         )
 
 

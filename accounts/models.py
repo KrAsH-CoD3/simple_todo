@@ -15,12 +15,9 @@ class CustomUserManager(auth_models.BaseUserManager):
         except ValidationError:
             raise ValueError(_('Please enter a valid email address!'))
 
-    def create_user(self, email, first_name, last_name, username, password1, password2, **extra_fields):
+    def create_user(self, email, first_name, last_name, username, password, **extra_fields):
         if not email:
             raise ValueError(_('User must have an email address'))
-
-        if password1 != password2: # This is done in the serializer(Remember DRY)
-            raise ValidationError(_('Passwords do not match!'))
         
         email = self.normalize_email(email) # Setting email to lowercase(domain part)
         self.email_validator(email)
@@ -33,12 +30,12 @@ class CustomUserManager(auth_models.BaseUserManager):
             **extra_fields
         )
 
-        user.set_password(password1)
+        user.set_password(password)
         user.full_clean()
         user.save(using=self._db)
         return user
     
-    def create_superuser(self, email, first_name, last_name, username, password1, password2, **extra_fields):
+    def create_superuser(self, email, first_name, last_name, username, password, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
@@ -53,15 +50,14 @@ class CustomUserManager(auth_models.BaseUserManager):
             first_name=first_name, 
             last_name=last_name, 
             username=username, 
-            password1=password1, 
-            password2=password2, 
+            password=password,
             **extra_fields
         )
 
 
 class CustomUser(auth_models.AbstractBaseUser, auth_models.PermissionsMixin):
     # Since null and blank are not defined in the email field and email is used as username so it is definitely required
-    email = db_models.EmailField(unique=True, max_length=50, verbose_name='Email address')
+    email = db_models.EmailField(unique=True, max_length=50, verbose_name=_('Email address'))
 
     # These fields are REQUIRED since both null and blank are False
     first_name = db_models.CharField(max_length=30, null=False, blank=False, verbose_name=_("First Name")) 
@@ -82,7 +78,7 @@ class CustomUser(auth_models.AbstractBaseUser, auth_models.PermissionsMixin):
     last_login = db_models.DateTimeField(auto_now=True)
 
     USERNAME_FIELD = 'email'
-    # REQUIRED_FIELDS = ['username'] # For creating superuser using `createsuperuser` command
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name'] # For creating superuser using `createsuperuser` command
 
     objects = CustomUserManager()
 
@@ -108,7 +104,8 @@ class CustomUser(auth_models.AbstractBaseUser, auth_models.PermissionsMixin):
         if self.first_name == self.last_name:
             raise ValidationError('First name and last name cannot be the same.')
         return self
-    
+
+
 class Subscription(db_models.Model):
     PLAN_CHOICES = [
         ('free', 'Free Plan'),

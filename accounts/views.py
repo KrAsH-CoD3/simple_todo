@@ -25,13 +25,12 @@ from .serializers import (
 )
 from django.contrib.auth import get_user_model
 from .utils import send_code_to_user
-from django.conf import Settings, settings
-import requests
+from django.conf import settings
 from .models import Subscription
 from django.utils.timezone import now
 from datetime import timedelta
-import hmac, hashlib
 from json import loads as json_loads, JSONDecodeError
+import hmac, hashlib, requests
 
 
 User = get_user_model() # Get the current active user model(CustomUser)
@@ -41,14 +40,18 @@ class UserRegisterView(generics.GenericAPIView):
     serializer_class = UserRegisterSerializer
 
     def post(self, request) -> Response:
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save() # Returns the user class (CustomUser in this case)
+        try:
+            serializer = self.serializer_class(data=request.data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save() # Returns the user class (CustomUser in this case)
 
-            send_code_to_user(serializer.data['email'])
+                send_code_to_user(serializer.data['email'])
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Error Occured: {e}")
+            return Response({"error": "Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class VerifyUserEmailView(generics.GenericAPIView):
@@ -342,8 +345,7 @@ class WebhookVerifySubscriptionView(generics.GenericAPIView):
         if computed_signature != paystack_signature:
             return Response({'error': 'Invalid Paystack signature'}, status=status.HTTP_400_BAD_REQUEST)
 
-        subscription = Subscription.objects.filter(reference=reference).first()
-        if subscription:
+        if subscription:= Subscription.objects.filter(reference=reference).first():
             subscription.status = 'active'
             subscription.start_date = now()
             subscription.end_date = now() + timedelta(days=30)
@@ -376,6 +378,7 @@ class UserSubscriptionListView(generics.GenericAPIView):
             ]
             return Response({"status": "ok", "subscriptions": subs_data})
         return Response({"Status": "ok", "subscriptions": []})
+
 
 class ActiveSubscriptionView(APIView):
     permission_classes = [IsAuthenticated]
