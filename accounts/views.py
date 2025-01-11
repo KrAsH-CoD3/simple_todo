@@ -160,6 +160,7 @@ class UserSetNewPasswordView(generics.GenericAPIView):
         # serializers.save()
         return Response({'message': 'Password updated successfully.'}, status=status.HTTP_200_OK)
 
+
 class UserinitiateSubscriptionView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -292,10 +293,9 @@ class WebhookVerifySubscriptionView(generics.GenericAPIView):
         """
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
+            return x_forwarded_for.split(',')[0] # IP Address
         else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+            return request.META.get('REMOTE_ADDR') # IP Address
 
     def post(self, request):
         secret_key = settings.PAYSTACK_SECRET_KEY.encode('utf-8')
@@ -322,7 +322,6 @@ class WebhookVerifySubscriptionView(generics.GenericAPIView):
             # Catch other exceptions
             print(f"Error Occured: {e}") # LOG THIS
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)        
-
 
     def handle_charge_success(self, payload, secret_key, paystack_signature) -> Response:
         """
@@ -355,7 +354,7 @@ class WebhookVerifySubscriptionView(generics.GenericAPIView):
 
         print("Your ass is an Hacker!!!")
         # Do something else if subscription doesn't exist(likely an hacker)
-        return Response({'status': 'success'}, status=status.HTTP_200_OK)
+        return Response({'status': 'Bad Request'}, status=status.HTTP_400_BAD_REQUEST)
 
     def handle_subscription_create(self, payload):
         """

@@ -43,7 +43,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return data
     
     def validate_password1(self, data):
-        # print(data) # data is the value of the field
+        # This method note that each field can be validated independently
+        # print(data) # data is the value of the field(in this case password1)
         return data
 
     def validate_email(self, email):
@@ -62,10 +63,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         # from the serializer. E.g Model accept only 'password' instead of 'password1' and 'password2' 
         return User.objects.create_user(
             email=validated_data['email'],
+            password=password,
+            
+            # Making sure the below fields are after email and password (as in **extra_kwargs in models.py)
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
             username=validated_data['username'],
-            password=password,
         )
 
 
