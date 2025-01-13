@@ -1,16 +1,17 @@
-from rest_framework import serializers
-from django.contrib.auth import get_user_model, authenticate
-from rest_framework.validators import UniqueValidator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 # from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.utils.encoding import force_str, smart_bytes
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.auth import get_user_model, authenticate
 from django.contrib.sites.shortcuts import get_current_site
-from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import AuthenticationFailed
+from django.utils.encoding import force_str, smart_bytes
+from django.utils.translation import gettext_lazy as _
+from rest_framework.validators import UniqueValidator
 from .utils import send_reset_password_email
+from rest_framework import serializers
 from .models import Subscription
+from django.urls import reverse
+import cloudinary.uploader
 
 
 User = get_user_model() # Get the current active user model(CustomUser)
@@ -20,11 +21,11 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(min_length=6, max_length=30, write_only=True)
     access_token = serializers.CharField(max_length=60, read_only=True)
     refresh_token = serializers.CharField(max_length=60, read_only=True)
-
+    profile_image = serializers.ImageField(required=False)
 
     class Meta:
         model = User
-        fields = ['email', 'first_name', 'last_name', 'username', 'password1', 'password2', 'access_token', 'refresh_token']
+        fields = ['email', 'first_name', 'last_name', 'username', 'password1', 'password2', 'access_token', 'refresh_token', 'profile_image']
         extra_kwargs = { # No need for this since it has already been defined in the model fields
             'last_name': {'default': ''}, # API level default value
             'first_name': {'allow_blank': True}, # API level allow blank as long as it is provided in the request
@@ -55,21 +56,17 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return email
     
     def create(self, validated_data):
-        # print(validated_data) # validated_data is the validated data in dict
+        # Handle password to match with model structure
+        # Since we our model is expecting 'password' as the field name and no password1 and password2 fields
+        validated_data['password'], _ = validated_data.pop('password1'), validated_data.pop('password2')
 
-        password, _ = validated_data.pop('password1'), validated_data.pop('password2')
-        
-        # Explicitly defining the arg is the best as the model can be different
-        # from the serializer. E.g Model accept only 'password' instead of 'password1' and 'password2' 
-        return User.objects.create_user(
-            email=validated_data['email'],
-            password=password,
-            
-            # Making sure the below fields are after email and password (as in **extra_kwargs in models.py)
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name'],
-            username=validated_data['username'],
-        )
+        # Handle profile image upload
+        profile_image = validated_data.pop('profile_image', None)
+        if profile_image:
+            upload_result = cloudinary.uploader.upload(profile_image)
+            validated_data['profile_image_url'] = upload_result.get('secure_url')
+
+        return User.objects.create_user(**validated_data)
 
 
 class UserLoginSerializer(serializers.Serializer):
@@ -164,3 +161,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     def get_is_active(self, obj):
         return obj.status == 'active'
+
+
+class CloudinaryUploadSerializer(serializers.Serializer):
+    image = serializers.ImageField()

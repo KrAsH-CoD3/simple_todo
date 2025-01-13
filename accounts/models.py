@@ -63,6 +63,7 @@ class CustomUser(auth_models.AbstractBaseUser, auth_models.PermissionsMixin):
     # If last_name is not passed in serializer, it will raise error since it is required in the user model creation
     last_name = db_models.CharField(max_length=30, blank=True, default='', verbose_name=_("Last Name")) 
     subscription_status = db_models.CharField(max_length=10, default='free')  # 'free' or 'premium'
+    profile_image_url = db_models.URLField(max_length=500, blank=True, null=True, verbose_name=_("Profile Image URL"))
 
     is_active = db_models.BooleanField(default=True)
     is_staff = db_models.BooleanField(default=False)

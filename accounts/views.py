@@ -1,15 +1,15 @@
-from uuid import uuid4
-from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
-from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import smart_str, DjangoUnicodeDecodeError
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.utils.http import urlsafe_base64_decode
+from rest_framework.response import Response
+from rest_framework import generics, status
+from rest_framework.views import APIView
 from django.db import transaction
+from uuid import uuid4
 
 # from rest_framework.generics import ListAPIView
 
@@ -21,7 +21,8 @@ from .serializers import (
     UserLoginSerializer, 
     UserPasswordResetSerializer,
     UserSetNewPasswordSerializer,
-    SubscriptionSerializer
+    SubscriptionSerializer,
+    CloudinaryUploadSerializer
 )
 from django.contrib.auth import get_user_model
 from .utils import send_code_to_user

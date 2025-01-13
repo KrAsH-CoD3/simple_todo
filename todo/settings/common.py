@@ -29,7 +29,14 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'accounts',
     'rest_framework_simplejwt.token_blacklist',
+    'cloudinary',
 ]
+
+CLOUDINARY = {
+    'cloud_name': environ.get('CLOUDINARY_CLOUD_NAME'),
+    'api_key': environ.get('CLOUDINARY_API_KEY'),
+    'api_secret': environ.get('CLOUDINARY_SECRET_KEY'),
+}
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -38,8 +45,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
-    "REFRESH_TOKEN_LIFETIME": timedelta(hours=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=10),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "AUTH_HEADER_TYPES": ("Bearer",),
     'ROTATE_REFRESH_TOKENS': True,  # Allows refresh token rotation
     'BLACKLIST_AFTER_ROTATION': True,  # Blacklist old refresh tokens
@@ -60,7 +67,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
-    "https://fcea-2c0f-f5c0-600-e41a-f933-f739-9871-268d.ngrok-free.app"
+    "https://" + environ.get('ALLOWED_HOSTS')
 ]
 
 CORS_ALLOW_METHODS = [
