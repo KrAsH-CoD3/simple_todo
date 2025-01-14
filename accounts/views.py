@@ -1,3 +1,4 @@
+import email
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from django.utils.encoding import smart_str, DjangoUnicodeDecodeError
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
@@ -13,7 +14,7 @@ from uuid import uuid4
 
 # from rest_framework.generics import ListAPIView
 
-from .models import OneTimePassword, Subscription # SAME AS BELOW
+from .models import OneTimePassword, Subscription, CustomUser # SAME AS BELOW
 # from accounts.models import OneTimePassword, Subscription
 from todoapp import serializers
 from .serializers import (
@@ -22,12 +23,13 @@ from .serializers import (
     UserPasswordResetSerializer,
     UserSetNewPasswordSerializer,
     SubscriptionSerializer,
-    CloudinaryUploadSerializer
+    CloudinaryUploadSerializer,
+
+    cloudinary # Cloud image Service API(since it has already been imported in the serializers.py file)
 )
 from django.contrib.auth import get_user_model
 from .utils import send_code_to_user
 from django.conf import settings
-from .models import Subscription
 from django.utils.timezone import now
 from datetime import timedelta
 from json import loads as json_loads, JSONDecodeError
@@ -391,3 +393,32 @@ class ActiveSubscriptionView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
+class ProfilePictureUpdateView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        new_image = request.FILES.get('profile_picture_image')
+        if not new_image:
+            return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = CustomUser.objects.filter(email=request.user.email).first()
+        if user:
+            current_image_url = user.profile_image_url
+            
+            try:
+                # Extract the Cloudinary public_id from the URL (if exists)
+                if current_image_url:
+                    public_id = current_image_url.split('/')[-1].split('.')[0] # Image name without extension
+
+                    # Delete the existing image from Cloudinary
+                    cloudinary.uploader.destroy(public_id)
+
+                upload_data = cloudinary.uploader.upload(new_image) 
+                cloudinary_url: str | None = upload_data.get('secure_url')
+                user.profile_image_url = cloudinary_url
+                user.save()
+                
+                return Response({"url": cloudinary_url}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "No user found"}, status=status.HTTP_400_BAD_REQUEST)
